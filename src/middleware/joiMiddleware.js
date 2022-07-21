@@ -1,4 +1,4 @@
-import { categorySchema, gameSchema, customerSchema, rentalSchema } from '../databaseSchema/models/joiSchemas.js';
+import { categorySchema, gameSchema, customerSchema, rentalSchema, postRentalSchema } from '../databaseSchema/models/joiSchemas.js';
 
 export function categoryValidation (req, res, next){
 
@@ -39,3 +39,12 @@ export function rentalValidation (req, res, next){
     }
     next();
 };
+
+export function openRentalValidation (req, res, next){
+    const data = res.locals.cleanData;
+    const validation = postRentalSchema.validate(data, {abortEarly:true});
+    if(validation.error){
+        return res.sendStatus(400);
+    }
+    next();
+}

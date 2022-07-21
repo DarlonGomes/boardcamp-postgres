@@ -33,3 +33,9 @@ export const rentalSchema = Joi.object({
   originalPrice: Joi.number().min(1).required(),       
   delayFee: Joi.number().required()  
 });
+
+export const postRentalSchema = Joi.object({
+    customerId:Joi.number().min(1).required(),
+    gameId: Joi.number().min(1).required(),
+    daysRented: Joi.number().min(1).required()
+})
