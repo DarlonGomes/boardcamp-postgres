@@ -31,13 +31,42 @@ export async function openRentals (req,res){
 }
 
 export async function finishRentals (req,res){
+const {id} = req.params;
+const today = dayjs().format('YYYY-MM-DD');
+let fee = null;
 
+try {
+    const { rows } = await connection.query('SELECT *  FROM rentals  WHERE id = $1', [id]);
 
+    if(rows.length === 0 ) return res.sendStatus(404);
+    if(rows[0].returnDate !== null ) return res.sendStatus(404);
 
+    const diff = dayjs().diff(rows[0].rentDate, 'day');
+
+    if(diff > 0){
+        fee = (rows[0].originalPrice / rows[0].daysRented) * diff;
+    }
+
+    await connection.query('UPDATE rentals SET "returnDate"= $1, "delayFee"=$2 WHERE id=$3', [today, fee, id])
+    return res.sendStatus(200);
+} catch (error) {
+    return res.sendStatus(500);
+}
 }
 
 export async function deleteRentals (req,res){
+    const {id} = req.params;
 
-
+    try {
+        const {rows} = await connection.query('SELECT * FROM rentals WHERE id = $1', [id]);
+        
+        if(rows.length === 0) return res.sendStatus(404);
+        if(rows[0].returnDate !== null) return res.sendStatus(400);
+        
+        await connection.query('DELETE FROM rentals WHERE id= $1', [id]);
+        return res.sendStatus(200);
+    } catch (error) {
+        return res.send(error).status(500);
+    }
     
 }
