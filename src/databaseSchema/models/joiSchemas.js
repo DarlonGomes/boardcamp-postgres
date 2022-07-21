@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 
 let now = dayjs();
 
-const minAge = new Date(now - (1000 * 60 * 60 * 24 * 365 * 18));
+const minAge = new Date(now - (1000 * 60 * 60 * 24 * 365 * 14));
 
 export const categorySchema = Joi.object({
     name: Joi.string().min(1).required()

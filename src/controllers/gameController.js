@@ -9,16 +9,19 @@ export async function getGames (req,res){
     try {
         switch (true) {
             case request.categories !== undefined:
-                response = await connection.query('SELECT * FROM games WHERE LOWER(categoryName) LIKE LOWER($1)', [`${request.categories}%`]);
+                response = await connection.query('SELECT * FROM games WHERE LOWER(categoryName) LIKE LOWER($1)',
+                [`${request.categories}%`]);
                 break;
             case request.pricePerDay !== undefined:
-                response = await connection.query('SELECT * FROM games WHERE pricePerDay = $1', [request.pricePerDay]);
+                response = await connection.query('SELECT * FROM games WHERE pricePerDay = $1',
+                [request.pricePerDay]);
                 break;
             case request.name !== undefined:
-                response = await connection.query('SELECT * FROM games WHERE LOWER(name) LIKE LOWER($1)', [`${request.name}%`]);
+                response = await connection.query('SELECT g.*, c.name AS "categoryName" FROM games g, categories c WHERE c.id = g."categoryId" AND LOWER(g.name) LIKE LOWER($1)',
+                [`${request.name}%`]);
                 break;
             default:
-                response = await connection.query('SELECT * FROM games');
+                response = await connection.query('SELECT g.*, c.name AS "categoryName" FROM games g, categories c WHERE c.id = g."categoryId"');
                 break;
         }
         if(response.rows.length === 0){
