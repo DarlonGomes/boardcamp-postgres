@@ -3,7 +3,52 @@ import connection from "../databaseSchema/postgres.js";
 import dayjs from "dayjs";
 
 export async function getRentals(req,res){
-const response = await connection.query('SELECT * FROM rentals')
+let response;
+switch (true) {
+    case req.query.customerId !== undefined:
+        response = await connection.query(`SELECT r.*,
+        jsonb_build_object(
+            'id', c.id,
+            'name', c.name
+        ) as customer,
+        jsonb_build_object(
+            'id', g.id,
+            'name', g.name,
+            'categoryId', g."categoryId",
+            'categoryName', ca.name
+        )as game FROM rentals r JOIN customers c ON "customerId"=c.id JOIN games g ON "gameId"=g.id JOIN categories ca ON "categoryId"=ca.id
+         WHERE "customerId" = $1`,[req.query.customerId]);
+        break;
+    case req.query.gameId !== undefined:
+        response = await connection.query(`SELECT r.*,
+        jsonb_build_object(
+            'id', c.id,
+            'name', c.name
+        ) as customer,
+        jsonb_build_object(
+            'id', g.id,
+            'name', g.name,
+            'categoryId', g."categoryId",
+            'categoryName', ca.name
+        )as game FROM rentals r JOIN customers c ON "customerId"=c.id JOIN games g ON "gameId"=g.id JOIN categories ca ON "categoryId"=ca.id
+         WHERE "gameId" = $1`, [req.query.gameId]);
+        break;
+    default:
+        response = await connection.query(`SELECT r.*,
+        jsonb_build_object(
+            'id', c.id,
+            'name', c.name
+        ) as customer,
+        jsonb_build_object(
+            'id', g.id,
+            'name', g.name,
+            'categoryId', g."categoryId",
+            'categoryName', ca.name
+        )as game FROM rentals r JOIN customers c ON "customerId"=c.id JOIN games g ON "gameId"=g.id JOIN categories ca ON "categoryId"=ca.id`);
+        break;
+}
+
+    return res.send(response.rows).status(200);
 }
 
 export async function openRentals (req,res){
@@ -36,15 +81,15 @@ const today = dayjs().format('YYYY-MM-DD');
 let fee = null;
 
 try {
-    const { rows } = await connection.query('SELECT *  FROM rentals  WHERE id = $1', [id]);
+    const { rows: item } = await connection.query('SELECT *  FROM rentals  WHERE id = $1', [id]);
 
-    if(rows.length === 0 ) return res.sendStatus(404);
-    if(rows[0].returnDate !== null ) return res.sendStatus(404);
+    if(item.length === 0 ) return res.sendStatus(404);
+    if(item[0].returnDate !== null ) return res.sendStatus(404);
 
-    const diff = dayjs().diff(rows[0].rentDate, 'day');
+    const diff = dayjs().diff(item[0].rentDate, 'day');
 
     if(diff > 0){
-        fee = (rows[0].originalPrice / rows[0].daysRented) * diff;
+        fee = (item[0].originalPrice / item[0].daysRented) * diff;
     }
 
     await connection.query('UPDATE rentals SET "returnDate"= $1, "delayFee"=$2 WHERE id=$3', [today, fee, id])
@@ -58,10 +103,10 @@ export async function deleteRentals (req,res){
     const {id} = req.params;
 
     try {
-        const {rows} = await connection.query('SELECT * FROM rentals WHERE id = $1', [id]);
+        const {rows: item} = await connection.query('SELECT * FROM rentals WHERE id = $1', [id]);
         
-        if(rows.length === 0) return res.sendStatus(404);
-        if(rows[0].returnDate !== null) return res.sendStatus(400);
+        if(item.length === 0) return res.sendStatus(404);
+        if(item[0].returnDate !== null) return res.sendStatus(400);
         
         await connection.query('DELETE FROM rentals WHERE id= $1', [id]);
         return res.sendStatus(200);
