@@ -3,30 +3,73 @@ import connection from "../databaseSchema/postgres.js";
 
 export async function getCustomer (req,res){
     const {id} = req.params;
-    const query = req.query;
+    const request = req.query;
     let response;
     
-        try {
-            switch (true) {
-                case id !== undefined:
-                    response = await connection.query('SELECT * FROM customers WHERE id = $1', [id])
-                    if(response.rows.length === 0) return res.sendStatus(404);
-                    break;
-                case query.name !== undefined:
-                    response = await connection.query('SELECT * FROM customers WHERE LOWER(name) LIKE LOWER($1)', [`${query.name}%`])
-                    break;
-                case query.cpf !== undefined:
-                  
-                    response = await connection.query('SELECT * FROM customers WHERE cpf LIKE $1', [`${query.cpf}%`])
-                    break;
-                default:
-                    response = await connection.query('SELECT * FROM customers');
-                    break;
-            }
-            return res.send(response.rows).status(200);
-        } catch (error) {
-            return res.sendStatus(500);
+    try {
+        switch (true) {
+            case request.order !== undefined && request.desc !== undefined:
+                response = await connection.query(`
+                SELECT * FROM customers
+                ORDER BY $1
+                DESC
+                `, [request.order]);
+            break;
+            case request.order !== undefined:
+                response = await connection.query(`
+                SELECT * FROM customers
+                ORDER BY $1
+                `, [request.order]);
+            break;
+            case request.offset !== undefined && request.limit !== undefined:
+                response = await connection.query(`
+                SELECT * FROM customers
+                OFFSET $1
+                LIMIT $2`,
+                [request.offset, request.limit]);
+            break;
+            case request.offset !== undefined :
+                response = await connection.query(`
+                SELECT * FROM customers
+                OFFSET $1`,
+                [request.offset]);
+            break;
+            case request.limit !== undefined:
+                response = await connection.query(`
+                SELECT * FROM customers
+                LIMIT $1`,
+                [request.limit]);
+            break;
+            case id !== undefined:
+                response = await connection.query(`
+                SELECT * FROM customers 
+                WHERE id = $1`,
+                [id]);
+                if(response.rows.length === 0) return res.sendStatus(404);
+            break;
+            case request.name !== undefined:
+                response = await connection.query(`
+                SELECT * FROM customers 
+                WHERE LOWER(name) 
+                LIKE LOWER($1)`, 
+                [`${query.name}%`]);
+            break;
+            case request.cpf !== undefined:
+                response = await connection.query(`
+                SELECT * FROM customers 
+                WHERE cpf 
+                LIKE $1`, 
+                [`${query.cpf}%`]);
+            break;
+            default:
+                response = await connection.query(`
+                SELECT * FROM customers`);
+            break;
         }
+    return res.send(response.rows).status(200);
+    } catch (error) {
+        return res.sendStatus(500);
+    }
 };
 
 export async function postCustomer (req,res){

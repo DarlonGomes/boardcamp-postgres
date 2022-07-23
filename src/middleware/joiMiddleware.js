@@ -26,7 +26,6 @@ export function customerValidation (req, res, next){
     const data = res.locals.cleanData;
     const validation = customerSchema.validate(data, {abortEarly: true});
     if(validation.error){
-        console.log(validation.error)
         return res.sendStatus(400);
     }
     next();
