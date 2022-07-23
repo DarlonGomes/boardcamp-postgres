@@ -289,22 +289,92 @@ export async function deleteRentals (req,res){
 export async function getMetrics (req,res){
     const request = req.query;
     let response;
+    let info;
+    let fee;
+    let rentals;
     try {
         switch (true) {
             case request.startDate !== undefined && request.endDate !== undefined:
-                
+                 nfo = await connection.query(`
+                SELECT
+                SUM("originalPrice")::double precision AS base
+                FROM rentals 
+                WHERE "rentDate" >= $1 AND "rentDate" <= $2
+                `, [request.startDate, request.endDate]);
+                fee = await connection.query(`
+                SELECT
+                SUM("delayFee")::double precision AS delay
+                FROM rentals 
+                WHERE "rentDate" >= $1 AND "rentDate" <= $2
+                `, [request.startDate, request.endDate]);
+                rentals = await connection.query(`
+                SELECT
+                COUNT(id)::double precision AS average
+                FROM rentals 
+                WHERE "rentDate" >= $1 AND "rentDate" <= $2
+                `, [request.startDate, request.endDate]);
                 break;
             case request.startDate !== undefined :
-                
+                info = await connection.query(`
+                SELECT
+                SUM("originalPrice")::double precision AS base
+                FROM rentals
+                WHERE "rentDate" >= $1
+                `, [request.startDate]);
+                fee = await connection.query(`
+                SELECT
+                SUM("delayFee")::double precision AS delay
+                FROM rentals
+                WHERE "rentDate" >= $1
+                `, [request.startDate]);
+                rentals = await connection.query(`
+                SELECT
+                COUNT(id)::double precision AS average
+                FROM rentals
+                WHERE "rentDate" >= $1
+                `, [request.startDate]);
                 break;
             case request.endDate !== undefined:
-                
+                info = await connection.query(`
+                SELECT
+                SUM("originalPrice")::double precision AS base
+                FROM rentals
+                WHERE "rentDate" <= $1
+                `, [request.endDate]);
+                fee = await connection.query(`
+                SELECT
+                SUM("delayFee")::double precision AS delay
+                FROM rentals
+                WHERE "rentDate" <= $1
+                `, [request.endDate]);
+                rentals = await connection.query(`
+                SELECT
+                COUNT(id)::double precision AS average
+                FROM rentals
+                WHERE "rentDate" <= $1`
+                , [request.endDate]);
                 break;
             default:
-                response = await connection.query(`
-                
+                info = await connection.query(`
+                SELECT
+                SUM("originalPrice")::double precision AS base
+                FROM rentals
+                `)
+                fee = await connection.query(`
+                SELECT
+                SUM("delayFee")::double precision AS delay
+                FROM rentals
                 `);
+                rentals = await connection.query(`
+                SELECT
+                COUNT(id)::double precision AS average
+                FROM rentals`);
                 break;
+        }
+        response = {
+            revenue: info.rows[0].base + fee.rows[0].delay ,
+            rentals: rentals.rows[0].average,
+            average: (info.rows[0].base + fee.rows[0].delay) / rentals.rows[0].average
         }
         return res.send(response).status(200);
     } catch (error) {
