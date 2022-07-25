@@ -3,7 +3,9 @@ import connection from "../databaseSchema/postgres.js";
 import dayjs from "dayjs";
 
 export async function getRentals(req,res){
+
 const request= req.query
+
 let response;
 switch (true) {
     case request.startDate !== undefined:
@@ -23,8 +25,8 @@ switch (true) {
         JOIN customers c ON "customerId" = c.id
         JOIN games g ON "gameId" = g.id
         JOIN categories ca ON "categoryId" = ca.id
-        WHERE "rentDate" >=$1
-        `), [request.startDate];
+        WHERE "rentDate" >= ${request.startDate}
+        `);
         break;
     case request.status !== undefined:
         if(request.status == 'open'){
@@ -44,7 +46,7 @@ switch (true) {
             JOIN customers c ON "customerId"=c.id 
             JOIN games g ON "gameId"=g.id 
             JOIN categories ca ON "categoryId"=ca.id
-            WHERE "returnDate" <> null
+            WHERE "returnDate" IS NOT null
             `);
         }else{
             response = await connection.query(`
@@ -63,7 +65,7 @@ switch (true) {
             JOIN customers c ON "customerId"=c.id 
             JOIN games g ON "gameId"=g.id 
             JOIN categories ca ON "categoryId"=ca.id
-            WHERE "returnDate" = null
+            WHERE "returnDate" IS null
             `);
         }
 
@@ -85,9 +87,9 @@ switch (true) {
         JOIN customers c ON "customerId"=c.id 
         JOIN games g ON "gameId"=g.id 
         JOIN categories ca ON "categoryId"=ca.id
-        ORDER BY $1
+        ORDER BY ${request.order}
         DESC
-        `, [request.order]);
+        `);
         break;
     case request.order !== undefined:
         response = await connection.query(`
@@ -106,8 +108,7 @@ switch (true) {
         JOIN customers c ON "customerId"=c.id 
         JOIN games g ON "gameId"=g.id 
         JOIN categories ca ON "categoryId"=ca.id
-        ORDER BY $1
-        `, [request.order]);
+        ORDER BY ${request.order}`);
         break;
     case request.offset !== undefined && request.limit !== undefined:
         response = await connection.query(`

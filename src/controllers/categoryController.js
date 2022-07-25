@@ -9,15 +9,15 @@ export async function getCategories (req,res){
             case request.order !== undefined && request.desc !== undefined:
                 response = await connection.query(`
                 SELECT * FROM categories
-                ORDER BY $1
+                ORDER BY ${request.order}
                 DESC
-                `, [request.order]);
+                `);
                 break;
             case request.order !== undefined:
                 response = await connection.query(`
                 SELECT * FROM categories
-                ORDER BY $1
-                `, [request.order]);
+                ORDER BY ${request.order}
+                `);
                 break;
             case request.desc !== undefined:
             case request.offset !== undefined && request.limit !== undefined:

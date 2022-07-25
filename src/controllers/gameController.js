@@ -11,31 +11,31 @@ export async function getGames (req,res){
                 response = await connection.query(`
                 SELECT g.*, c.name AS "categoryName" FROM games g, categories c 
                 WHERE c.id = g."categoryId"
-                ORDER BY $1
+                ORDER BY ${request.order}
                 DESC
-                `, [request.order]);
+                `);
             break;
             case request.order !== undefined:
                 response = await connection.query(`
                 SELECT g.*, c.name AS "categoryName" FROM games g, categories c 
                 WHERE c.id = g."categoryId"
-                ORDER BY $1
-                `, [request.order]);
+                ORDER BY ${request.order}
+                `);
             break;
             case request.offset !== undefined && request.limit !== undefined:
                 response = await connection.query(`
                 SELECT g.*, c.name AS "categoryName" FROM games g, categories c 
                 WHERE c.id = g."categoryId"
-                OFFSET $1
-                LIMIT $2`,
-                [request.offset, request.limit]);
+                OFFSET ${request.offset}
+                LIMIT ${request.limit}
+                `);
                 break;
             case request.offset !== undefined :
                 response = await connection.query(`
                 SELECT g.*, c.name AS "categoryName" FROM games g, categories c 
                 WHERE c.id = g."categoryId"
-                OFFSET $1`,
-                [request.offset]);
+                OFFSET ${request.offset}
+                `);
                 break;
             case request.limit !== undefined:
                 response = await connection.query(`
